@@ -7,8 +7,7 @@ import {
   ClipboardCheck, 
   Wallet, 
   MessageCircle,
-  Sparkles,
-  User
+  Sparkles
 } from 'lucide-react'
 import './Sidebar.css'
 
@@ -33,20 +32,6 @@ function Sidebar() {
         </div>
         <span className="logo-text">PROMMI</span>
         <span className="logo-badge">Creator</span>
-      </div>
-
-      {/* Profile Section */}
-      <div className="sidebar-profile">
-        <div className="profile-avatar">
-          <User size={24} />
-        </div>
-        <div className="profile-info">
-          <span className="profile-name">크리에이터님</span>
-          <span className="profile-badge">
-            <Sparkles size={12} />
-            Creator
-          </span>
-        </div>
       </div>
 
       {/* Navigation */}
@@ -88,8 +73,8 @@ function Sidebar() {
       {/* Footer - Credits */}
       <div className="sidebar-footer">
         <div className="sidebar-credits">
-          <span className="credits-label">보유 크레딧</span>
-          <span className="credits-value">500C</span>
+          <span className="credits-label">보유 케이크</span>
+          <span className="credits-value">🍰 500</span>
         </div>
       </div>
     </aside>
