@@ -138,6 +138,12 @@ function Profile() {
         <div className="profile-header">
           <div className="profile-cover">
             <div className="cover-gradient"></div>
+            {profile.isOwner && (
+              <button className="edit-profile-btn" onClick={handleEditProfile}>
+                <Edit3 size={14} />
+                프로필 수정
+              </button>
+            )}
           </div>
           
           <div className="profile-info">
@@ -173,13 +179,6 @@ function Profile() {
                   <span className="stat-label">팔로잉</span>
                 </button>
               </div>
-              
-              {profile.isOwner && (
-                <button className="edit-profile-btn" onClick={handleEditProfile}>
-                  <Edit3 size={14} />
-                  프로필 수정
-                </button>
-              )}
             </div>
             
             <div className="action-buttons">
