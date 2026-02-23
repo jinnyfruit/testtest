@@ -633,12 +633,14 @@
 }
 
 .follow-action-btn {
-  padding: 7px 16px;
+  min-width: 80px;
+  padding: 8px 16px;
   font-size: 14px;
   font-weight: 600;
   border-radius: 8px;
   transition: all 0.2s ease;
   cursor: pointer;
+  text-align: center;
 }
 
 .follow-action-btn.follow {
@@ -657,31 +659,6 @@
 
 .follow-action-btn.following:hover {
   background: #dbdbdb;
-}
-
-.follow-action-btn.unfollow {
-  background: #efefef;
-  color: #262626;
-}
-
-.follow-action-btn.unfollow:hover {
-  background: #ffebee;
-  color: #ed4956;
-}
-
-.follow-action-btn.remove {
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  color: #8e8e8e;
-}
-
-.follow-action-btn.remove:hover {
-  color: #ed4956;
 }
 
 .follow-empty {

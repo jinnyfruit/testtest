@@ -277,28 +277,18 @@ function Profile() {
                     </Link>
                     <div className="follow-actions">
                       {followModal.type === 'followers' ? (
-                        <>
-                          <button 
-                            className={`follow-action-btn ${user.isFollowing ? 'following' : 'follow'}`}
-                            onClick={() => handleToggleFollow(user.id, 'followers')}
-                          >
-                            {user.isFollowing ? '팔로잉' : '맞팔로우'}
-                          </button>
-                          {profile.isOwner && (
-                            <button 
-                              className="follow-action-btn remove"
-                              onClick={() => handleRemoveFollower(user.id)}
-                            >
-                              <UserMinus size={16} />
-                            </button>
-                          )}
-                        </>
+                        <button 
+                          className={`follow-action-btn ${user.isFollowing ? 'following' : 'follow'}`}
+                          onClick={() => handleToggleFollow(user.id, 'followers')}
+                        >
+                          {user.isFollowing ? '팔로잉' : '맞팔로우'}
+                        </button>
                       ) : (
                         <button 
-                          className="follow-action-btn unfollow"
+                          className="follow-action-btn following"
                           onClick={() => handleUnfollow(user.id)}
                         >
-                          언팔로우
+                          팔로잉
                         </button>
                       )}
                     </div>
