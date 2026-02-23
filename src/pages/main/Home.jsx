@@ -1,27 +1,27 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Heart, Eye, Play, Sparkles, TrendingUp, Star, ArrowRight, Zap, ChevronLeft, ChevronRight, MessageCircle, Users } from 'lucide-react'
+import { Heart, Eye, Play, ArrowRight, ChevronLeft, ChevronRight, ArrowUpRight } from 'lucide-react'
 import './Home.css'
 
-// 샘플 프롬프트 데이터
+// 샘플 프롬프트 데이터 - 실제 이미지 사용
 const featuredPrompts = [
-  { id: 1, title: '사이버펑크 네온 캐릭터', creator: 'creative_kim', price: 0, likes: 234, views: 1520, model: 'Midjourney', category: '캐릭터', image: 'https://picsum.photos/seed/cyber1/400/400' },
-  { id: 2, title: '미니멀 로고 디자인', creator: 'design_master', price: 500, likes: 189, views: 980, model: 'DALL-E 3', category: '로고', image: 'https://picsum.photos/seed/logo2/400/400' },
-  { id: 3, title: '판타지 풍경 일러스트', creator: 'art_lover', price: 800, likes: 456, views: 2340, model: 'Stable Diffusion', category: '풍경', image: 'https://picsum.photos/seed/fantasy3/400/400' },
-  { id: 4, title: '포토리얼 인물 사진', creator: 'photo_pro', price: 1200, likes: 321, views: 1890, model: 'Midjourney', category: '인물', image: 'https://picsum.photos/seed/portrait4/400/400' },
-  { id: 5, title: '아이소메트릭 아이콘', creator: 'icon_maker', price: 0, likes: 567, views: 3210, model: 'DALL-E 3', category: '아이콘', image: 'https://picsum.photos/seed/icon5/400/400' },
-  { id: 6, title: '빈티지 포스터 스타일', creator: 'retro_design', price: 600, likes: 234, views: 1450, model: 'Stable Diffusion', category: '포스터', image: 'https://picsum.photos/seed/vintage6/400/400' },
-  { id: 7, title: '3D 캐릭터 모델링', creator: 'model_expert', price: 1500, likes: 412, views: 2100, model: 'Midjourney', category: '3D', image: 'https://picsum.photos/seed/3d7/400/400' },
-  { id: 8, title: '애니메이션 배경', creator: 'anime_art', price: 0, likes: 678, views: 4500, model: 'Stable Diffusion', category: '배경', image: 'https://picsum.photos/seed/anime8/400/400' },
+  { id: 1, title: '4K 플래시 라이트닝', creator: 'creative_kim', price: 0, likes: 234, views: 1520, model: 'Midjourney', category: '캐릭터', image: '/prompts/4k_flash.webp' },
+  { id: 2, title: '90년대 레트로 스타일', creator: 'design_master', price: 500, likes: 189, views: 980, model: 'DALL-E 3', category: '포스터', image: '/prompts/90s.webp' },
+  { id: 3, title: '레트로 빈티지 컬렉션', creator: 'art_lover', price: 800, likes: 456, views: 2340, model: 'Stable Diffusion', category: '포스터', image: '/prompts/90s(2).webp' },
+  { id: 4, title: '포토리얼 뷰티', creator: 'photo_pro', price: 1200, likes: 321, views: 1890, model: 'Midjourney', category: '인물', image: '/prompts/realistic_beauty.webp' },
+  { id: 5, title: '풍선 텍스쳐 아트', creator: 'icon_maker', price: 0, likes: 567, views: 3210, model: 'DALL-E 3', category: '아이콘', image: '/prompts/balloon_texture.webp' },
+  { id: 6, title: '마인크래프트 음식', creator: 'retro_design', price: 600, likes: 234, views: 1450, model: 'Stable Diffusion', category: '3D', image: '/prompts/food_minecraft.webp' },
+  { id: 7, title: '마인크래프트 배경', creator: 'model_expert', price: 1500, likes: 412, views: 2100, model: 'Midjourney', category: '배경', image: '/prompts/minecraft_background.webp' },
+  { id: 8, title: '90s 네온 스타일', creator: 'anime_art', price: 0, likes: 678, views: 4500, model: 'Stable Diffusion', category: '포스터', image: '/prompts/90s(3).webp' },
 ]
 
-// 캐러셀용 이미지 데이터
+// 캐러셀용 이미지 데이터 - 실제 이미지 사용
 const carouselImages = [
-  { id: 1, image: 'https://picsum.photos/seed/hero1/600/800', title: '사이버펑크 네온', creator: 'creative_kim' },
-  { id: 2, image: 'https://picsum.photos/seed/hero2/600/800', title: '판타지 풍경', creator: 'art_lover' },
-  { id: 3, image: 'https://picsum.photos/seed/hero3/600/800', title: '미니멀 로고', creator: 'design_master' },
-  { id: 4, image: 'https://picsum.photos/seed/hero4/600/800', title: '포토리얼 인물', creator: 'photo_pro' },
-  { id: 5, image: 'https://picsum.photos/seed/hero5/600/800', title: '3D 캐릭터', creator: 'model_expert' },
+  { id: 1, image: '/prompts/4k_flash.webp', title: '4K 플래시 라이트닝', creator: 'creative_kim' },
+  { id: 2, image: '/prompts/realistic_beauty.webp', title: '포토리얼 뷰티', creator: 'photo_pro' },
+  { id: 3, image: '/prompts/90s.webp', title: '90년대 레트로', creator: 'design_master' },
+  { id: 4, image: '/prompts/balloon_texture.webp', title: '풍선 텍스쳐 아트', creator: 'art_lover' },
+  { id: 5, image: '/prompts/minecraft_background.webp', title: '마인크래프트 배경', creator: 'model_expert' },
 ]
 
 const categories = ['전체', '캐릭터', '풍경', '로고', '인물', '아이콘', '포스터', '3D', '배경', '패턴']
@@ -168,57 +168,48 @@ function Home() {
 
   return (
     <div className="home-page">
-      {/* Hero Section with Carousel */}
+      {/* Hero Section - Minimal & Bold */}
       <section className="hero-section">
         <div className="hero-content">
-          {/* Badge */}
-          <div className="hero-badge">
-            <span className="hero-badge-icon">
-              <Zap />
-            </span>
-            AI 크리에이티브의 새로운 기준
-          </div>
-          
           {/* Title */}
           <h1 className="hero-title">
-            <span className="gradient-text">프롬프트</span>로 만드는
-            <br />무한한 가능성
+            <span className="title-line">
+              <span className="gradient-text">Prompt</span>
+            </span>
+            <span className="title-line">Marketplace</span>
           </h1>
           
           {/* Subtitle */}
           <p className="hero-subtitle">
-            전 세계 크리에이터들의 검증된 프롬프트를 만나보세요.
-            당신의 아이디어를 현실로 만들어 드립니다.
+            크리에이터들의 프리미엄 프롬프트를 발견하세요
           </p>
           
-          {/* Stats */}
+          {/* CTA Buttons */}
+          <div className="hero-cta">
+            <Link to="/free" className="hero-btn primary">
+              <span>둘러보기</span>
+              <ArrowRight size={18} />
+            </Link>
+            <Link to="/creator" className="hero-btn secondary">
+              <span>크리에이터 되기</span>
+            </Link>
+          </div>
+          
+          {/* Stats - Minimal */}
           <div className="hero-stats">
             <div className="hero-stat">
-              <div className="hero-stat-icon">
-                <Sparkles />
-              </div>
-              <div className="hero-stat-content">
-                <span className="stat-value">12,345+</span>
-                <span className="stat-label">프롬프트</span>
-              </div>
+              <span className="stat-value">12K+</span>
+              <span className="stat-label">프롬프트</span>
             </div>
+            <div className="stat-divider"></div>
             <div className="hero-stat">
-              <div className="hero-stat-icon">
-                <TrendingUp />
-              </div>
-              <div className="hero-stat-content">
-                <span className="stat-value">5,678+</span>
-                <span className="stat-label">크리에이터</span>
-              </div>
+              <span className="stat-value">5K+</span>
+              <span className="stat-label">크리에이터</span>
             </div>
+            <div className="stat-divider"></div>
             <div className="hero-stat">
-              <div className="hero-stat-icon">
-                <Star />
-              </div>
-              <div className="hero-stat-content">
-                <span className="stat-value">98%</span>
-                <span className="stat-label">만족도</span>
-              </div>
+              <span className="stat-value">98%</span>
+              <span className="stat-label">만족도</span>
             </div>
           </div>
         </div>
@@ -227,31 +218,31 @@ function Home() {
         <ImageCarousel />
       </section>
 
-      {/* Community Banner */}
+      {/* Community Banner - Hot & Interactive */}
       <section className="community-banner">
-        <div className="banner-content">
-          <div className="banner-icon">
-            <MessageCircle size={28} />
-          </div>
-          <div className="banner-text">
-            <h3>커뮤니티에서 소통하세요</h3>
-            <p>프롬프트 관련 정보 공유, 질문, 결과물 자랑까지!</p>
-          </div>
-          <div className="banner-stats">
-            <div className="banner-stat">
-              <Users size={18} />
-              <span>5,234 멤버</span>
+        <Link to="/community" className="banner-content">
+          <div className="banner-bg"></div>
+          <div className="banner-main">
+            <div className="banner-text">
+              <span className="banner-tag">COMMUNITY</span>
+              <h3>크리에이터들과 소통하세요</h3>
+              <p>프롬프트 팁, 결과물 공유, 피드백까지</p>
             </div>
-            <div className="banner-stat">
-              <MessageCircle size={18} />
-              <span>12,567 게시글</span>
+            <div className="banner-stats">
+              <div className="banner-stat">
+                <span className="stat-num">5,234</span>
+                <span className="stat-text">멤버</span>
+              </div>
+              <div className="banner-stat">
+                <span className="stat-num">12,567</span>
+                <span className="stat-text">게시글</span>
+              </div>
             </div>
           </div>
-          <Link to="/community" className="banner-btn">
-            커뮤니티 가기
-            <ArrowRight size={16} />
-          </Link>
-        </div>
+          <div className="banner-arrow">
+            <ArrowUpRight size={24} />
+          </div>
+        </Link>
       </section>
 
       {/* Featured Section */}

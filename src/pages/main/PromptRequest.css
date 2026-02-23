@@ -185,7 +185,7 @@
 .card-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--text-light-primary);
+  color: #18181b !important;
   margin-bottom: 0.75rem;
   line-height: 1.4;
   display: -webkit-box;
@@ -196,7 +196,7 @@
 
 .card-desc {
   font-size: 0.875rem;
-  color: var(--text-light-secondary);
+  color: #52525b;
   line-height: 1.6;
   margin-bottom: 1rem;
   display: -webkit-box;

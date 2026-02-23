@@ -8,6 +8,8 @@ import FreePrompts from './pages/main/FreePrompts'
 import PaidPrompts from './pages/main/PaidPrompts'
 import PromptDetail from './pages/main/PromptDetail'
 import PromptRequest from './pages/main/PromptRequest'
+import PromptRequestDetail from './pages/main/PromptRequestDetail'
+import PromptRequestWrite from './pages/main/PromptRequestWrite'
 import Community from './pages/main/Community'
 import Run from './pages/main/Run'
 import Profile from './pages/main/Profile'
@@ -39,6 +41,8 @@ function App() {
           <Route path="paid" element={<PaidPrompts />} />
           <Route path="prompt/:id" element={<PromptDetail />} />
           <Route path="request" element={<PromptRequest />} />
+          <Route path="request/write" element={<PromptRequestWrite />} />
+          <Route path="request/:id" element={<PromptRequestDetail />} />
           <Route path="community" element={<Community />} />
           <Route path="run" element={<Run />} />
           <Route path="profile/:username" element={<Profile />} />

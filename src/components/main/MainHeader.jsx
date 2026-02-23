@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Bell, User, Menu, X, ChevronDown, Sparkles, CheckCircle, MessageCircle, ShoppingBag } from 'lucide-react'
+import { Bell, User, Menu, X } from 'lucide-react'
 import './MainHeader.css'
 
 // 케이크 아이콘 컴포넌트
@@ -23,9 +23,9 @@ const navItems = [
 
 // 샘플 알림 데이터
 const notificationsData = [
-  { id: 1, type: 'purchase', message: '프롬프트 "사이버펑크 네온 캐릭터"가 판매되었습니다.', time: '10분 전', read: false },
-  { id: 2, type: 'comment', message: '내 게시글에 새 댓글이 달렸습니다.', time: '1시간 전', read: false },
-  { id: 3, type: 'system', message: '프롬프트 심사가 완료되었습니다.', time: '3시간 전', read: true },
+  { id: 1, type: 'sale', message: '새로운 판매가 발생했습니다! "사이버펑크 네온 캐릭터"', time: '5분 전', read: false },
+  { id: 2, type: 'review', message: '컨텐츠 심사가 완료되었습니다. 승인됨', time: '1시간 전', read: false },
+  { id: 3, type: 'system', message: '새로운 기능이 추가되었습니다. 확인해보세요!', time: '3시간 전', read: true },
 ]
 
 function MainHeader() {
@@ -82,32 +82,35 @@ function MainHeader() {
                   <div className="notification-dropdown">
                     <div className="notification-header">
                       <h3>알림</h3>
-                      <button className="mark-all-read">모두 읽음</button>
+                      <button 
+                        className="notification-close"
+                        onClick={() => setNotificationOpen(false)}
+                      >
+                        <X size={16} />
+                      </button>
                     </div>
                     <div className="notification-list">
                       {notificationsData.length > 0 ? (
-                        notificationsData.map(notif => (
+                        notificationsData.map(notification => (
                           <div 
-                            key={notif.id} 
-                            className={`notification-item ${!notif.read ? 'unread' : ''}`}
+                            key={notification.id} 
+                            className={`notification-item ${notification.read ? 'read' : ''}`}
                           >
-                            <div className="notif-icon">
-                              {notif.type === 'purchase' && <ShoppingBag size={16} />}
-                              {notif.type === 'comment' && <MessageCircle size={16} />}
-                              {notif.type === 'system' && <CheckCircle size={16} />}
-                            </div>
-                            <div className="notif-content">
-                              <p className="notif-message">{notif.message}</p>
-                              <span className="notif-time">{notif.time}</span>
+                            <div className={`notification-dot ${notification.type}`} />
+                            <div className="notification-content">
+                              <p className="notification-message">{notification.message}</p>
+                              <span className="notification-time">{notification.time}</span>
                             </div>
                           </div>
                         ))
                       ) : (
                         <div className="notification-empty">
-                          <Bell size={24} />
-                          <p>새로운 알림이 없습니다</p>
+                          알림이 없습니다
                         </div>
                       )}
+                    </div>
+                    <div className="notification-footer">
+                      <button className="mark-all-read">모두 읽음으로 표시</button>
                     </div>
                   </div>
                 )}
