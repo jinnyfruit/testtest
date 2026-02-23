@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -7,262 +6,267 @@ import {
   Calendar,
   Download,
   Filter,
-  CreditCard,
   TrendingUp,
-  Clock
+  Clock,
+  AlertCircle,
+  ChevronDown
 } from 'lucide-react'
 import './Revenue.css'
 
-// 샘플 데이터
-const revenueData = [
+// 케이크 아이콘
+const CakeIcon = ({ size = 20 }) => (
+  <img 
+    src="/cake-icon.png" 
+    alt="케이크" 
+    style={{ width: size, height: size, objectFit: 'contain' }}
+  />
+)
+
+// 샘플 판매 데이터 (레퍼런스 스타일)
+const salesData = [
   {
     id: 1,
-    type: 'sale',
-    title: '사이버펑크 네온 캐릭터',
-    amount: 15000,
-    fee: 1500,
-    net: 13500,
-    date: '2024-02-09 14:32',
-    status: 'completed'
+    image: 'https://picsum.photos/seed/sale1/100/100',
+    format: 'PNG',
+    transactionId: 'D1769835625432F43C',
+    date: '2026-01-31 14:00:25',
+    price: 1000,
+    authorReward: 50,
+    revenue: 500,
+    total: 2000,
+    type: '수익(일반)'
   },
   {
     id: 2,
-    type: 'sale',
-    title: '미니멀 로고 디자인 프롬프트',
-    amount: 8000,
-    fee: 800,
-    net: 7200,
-    date: '2024-02-08 09:15',
-    status: 'completed'
+    image: 'https://picsum.photos/seed/sale2/100/100',
+    format: 'PNG',
+    transactionId: 'D1769513856225B3C1',
+    date: '2026-01-27 20:37:36',
+    price: 1000,
+    authorReward: 50,
+    revenue: 500,
+    total: 1500,
+    type: '수익(일반)'
   },
   {
     id: 3,
-    type: 'withdrawal',
-    title: '출금 신청',
-    amount: -500000,
-    fee: 0,
-    net: -500000,
-    date: '2024-02-07 16:45',
-    status: 'pending'
+    image: 'https://picsum.photos/seed/sale3/100/100',
+    format: 'PNG',
+    transactionId: 'D1757065550792D39B',
+    date: '2025-09-05 18:45:50',
+    price: 1000,
+    authorReward: 50,
+    revenue: 500,
+    total: 1000,
+    type: '수익(일반)'
   },
   {
     id: 4,
-    type: 'sale',
-    title: '판타지 풍경 일러스트',
-    amount: 25000,
-    fee: 2500,
-    net: 22500,
-    date: '2024-02-06 11:20',
-    status: 'completed'
-  },
-  {
-    id: 5,
-    type: 'sale',
-    title: '포토리얼 인물 사진',
-    amount: 12000,
-    fee: 1200,
-    net: 10800,
-    date: '2024-02-05 18:05',
-    status: 'completed'
-  },
-  {
-    id: 6,
-    type: 'withdrawal',
-    title: '출금 완료',
-    amount: -300000,
-    fee: 0,
-    net: -300000,
-    date: '2024-02-01 10:00',
-    status: 'completed'
-  },
-  {
-    id: 7,
-    type: 'sale',
-    title: '3D 캐릭터 모델링 프롬프트',
-    amount: 35000,
-    fee: 3500,
-    net: 31500,
-    date: '2024-01-30 15:30',
-    status: 'completed'
+    image: 'https://picsum.photos/seed/sale4/100/100',
+    format: 'PNG',
+    transactionId: 'D1757065478020D39B',
+    date: '2025-09-05 18:44:38',
+    price: 1000,
+    authorReward: 50,
+    revenue: 500,
+    total: 500,
+    type: '수익(일반)'
   },
 ]
 
-function SummaryCard({ icon: Icon, title, value, subtitle, trend, delay }) {
-  return (
-    <motion.div 
-      className="summary-card"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-    >
-      <div className="summary-icon">
-        <Icon size={24} />
-      </div>
-      <div className="summary-content">
-        <span className="summary-title">{title}</span>
-        <span className="summary-value">{value}</span>
-        {subtitle && <span className="summary-subtitle">{subtitle}</span>}
-      </div>
-      {trend && (
-        <div className={`summary-trend ${trend > 0 ? 'positive' : 'negative'}`}>
-          {trend > 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-          {Math.abs(trend)}%
-        </div>
-      )}
-    </motion.div>
-  )
-}
-
 function Revenue() {
-  const [filter, setFilter] = useState('all')
-  const [dateRange, setDateRange] = useState('month')
+  const [sortBy, setSortBy] = useState('latest')
+  const [perPage, setPerPage] = useState(12)
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
 
-  const filteredData = filter === 'all' 
-    ? revenueData 
-    : revenueData.filter(item => item.type === filter)
+  // 통계 데이터
+  const totalRevenue = 45678
+  const availableWithdraw = 23450
+  const pendingWithdraw = 5000
+  const thisMonthRevenue = 8900
 
   return (
-    <div className="revenue-page">
-      {/* Summary Cards */}
-      <div className="summary-grid">
-        <SummaryCard 
-          icon={Wallet}
-          title="총 수익"
-          value="₩4,567,890"
-          trend={12.5}
-          delay={0}
-        />
-        <SummaryCard 
-          icon={CreditCard}
-          title="정산 가능"
-          value="₩2,345,000"
-          subtitle="출금 가능한 금액"
-          delay={0.1}
-        />
-        <SummaryCard 
-          icon={TrendingUp}
-          title="이번 달 수익"
-          value="₩890,000"
-          trend={8.3}
-          delay={0.2}
-        />
-        <SummaryCard 
-          icon={Clock}
-          title="출금 대기"
-          value="₩500,000"
-          subtitle="처리 중 1건"
-          delay={0.3}
-        />
-      </div>
+    <div className="revenue-page-light">
+      <div className="revenue-container">
+        {/* 페이지 타이틀 */}
+        <h1 className="revenue-title">수익 & 출금 내역</h1>
 
-      {/* Filters & Actions */}
-      <motion.div 
-        className="revenue-toolbar"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-      >
-        <div className="toolbar-filters">
-          <div className="filter-group">
-            <Filter size={16} />
-            <select 
-              value={filter} 
-              onChange={(e) => setFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="all">전체</option>
-              <option value="sale">판매</option>
-              <option value="withdrawal">출금</option>
-            </select>
+        {/* 출금 안내 공지 */}
+        <div className="withdraw-notice">
+          <AlertCircle size={18} />
+          <span>출금 신청은 <strong>50,000원 이상</strong>부터 가능합니다. 매월 15일, 말일에 정산됩니다.</span>
+        </div>
+
+        {/* 통계 카드 */}
+        <div className="stats-cards">
+          <div className="stat-card">
+            <div className="stat-card-icon">
+              <CakeIcon size={24} />
+            </div>
+            <div className="stat-card-content">
+              <span className="stat-card-label">총 수익</span>
+              <span className="stat-card-value">{totalRevenue.toLocaleString()}원</span>
+            </div>
+            <div className="stat-card-trend positive">
+              <ArrowUpRight size={14} />
+              12.5%
+            </div>
           </div>
-          
-          <div className="filter-group">
-            <Calendar size={16} />
-            <select 
-              value={dateRange} 
-              onChange={(e) => setDateRange(e.target.value)}
-              className="filter-select"
+
+          <div className="stat-card">
+            <div className="stat-card-icon withdraw">
+              <Wallet size={24} />
+            </div>
+            <div className="stat-card-content">
+              <span className="stat-card-label">출금 가능</span>
+              <span className="stat-card-value">{availableWithdraw.toLocaleString()}원</span>
+            </div>
+            <button 
+              className="withdraw-btn"
+              onClick={() => setShowWithdrawModal(true)}
+              disabled={availableWithdraw < 50000}
             >
-              <option value="week">최근 1주</option>
-              <option value="month">최근 1개월</option>
-              <option value="quarter">최근 3개월</option>
-              <option value="year">최근 1년</option>
-            </select>
+              출금 신청
+            </button>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-icon pending">
+              <Clock size={24} />
+            </div>
+            <div className="stat-card-content">
+              <span className="stat-card-label">출금 대기</span>
+              <span className="stat-card-value">{pendingWithdraw.toLocaleString()}원</span>
+            </div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-icon month">
+              <TrendingUp size={24} />
+            </div>
+            <div className="stat-card-content">
+              <span className="stat-card-label">이번 달</span>
+              <span className="stat-card-value">{thisMonthRevenue.toLocaleString()}원</span>
+            </div>
+            <div className="stat-card-trend positive">
+              <ArrowUpRight size={14} />
+              8.3%
+            </div>
           </div>
         </div>
 
-        <div className="toolbar-actions">
-          <button className="action-btn secondary">
+        {/* 필터 & 정렬 */}
+        <div className="revenue-toolbar">
+          <div className="toolbar-left">
+            <div className="select-wrapper">
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="latest">최신순</option>
+                <option value="oldest">오래된순</option>
+                <option value="highest">높은금액순</option>
+                <option value="lowest">낮은금액순</option>
+              </select>
+              <ChevronDown size={16} />
+            </div>
+            <div className="select-wrapper">
+              <select value={perPage} onChange={(e) => setPerPage(Number(e.target.value))}>
+                <option value={12}>12개씩 보기</option>
+                <option value={24}>24개씩 보기</option>
+                <option value={48}>48개씩 보기</option>
+              </select>
+              <ChevronDown size={16} />
+            </div>
+          </div>
+          <button className="download-btn">
             <Download size={16} />
             내역 다운로드
           </button>
-          <motion.button 
-            className="action-btn primary"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <Wallet size={16} />
-            출금 신청
-          </motion.button>
         </div>
-      </motion.div>
 
-      {/* Revenue Table */}
-      <motion.div 
-        className="revenue-table-wrapper"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-      >
-        <table className="revenue-table">
-          <thead>
-            <tr>
-              <th>날짜</th>
-              <th>내역</th>
-              <th>금액</th>
-              <th>수수료</th>
-              <th>정산액</th>
-              <th>상태</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredData.map((item, index) => (
-              <motion.tr 
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 + index * 0.05 }}
+        {/* 판매 내역 테이블 */}
+        <div className="sales-table-wrapper">
+          <table className="sales-table">
+            <thead>
+              <tr>
+                <th>이미지</th>
+                <th>확장자</th>
+                <th>거래번호</th>
+                <th>날짜</th>
+                <th>단가</th>
+                <th>작가 리워드</th>
+                <th>수익금</th>
+                <th>합계</th>
+                <th>종류</th>
+              </tr>
+            </thead>
+            <tbody>
+              {salesData.map(sale => (
+                <tr key={sale.id}>
+                  <td className="image-cell">
+                    <img src={sale.image} alt="판매 이미지" />
+                  </td>
+                  <td className="format-cell">{sale.format}</td>
+                  <td className="transaction-cell">{sale.transactionId}</td>
+                  <td className="date-cell">{sale.date}</td>
+                  <td className="price-cell">{sale.price.toLocaleString()}원</td>
+                  <td className="reward-cell">{sale.authorReward}%</td>
+                  <td className="revenue-cell">{sale.revenue.toLocaleString()}원</td>
+                  <td className="total-cell">{sale.total.toLocaleString()}원</td>
+                  <td className="type-cell">
+                    <span className="type-badge">{sale.type}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {salesData.length === 0 && (
+          <div className="empty-state">
+            <p>아직 판매 내역이 없습니다</p>
+          </div>
+        )}
+      </div>
+
+      {/* 출금 신청 모달 */}
+      {showWithdrawModal && (
+        <div className="modal-overlay" onClick={() => setShowWithdrawModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>출금 신청</h2>
+            <div className="modal-body">
+              <div className="withdraw-info">
+                <span>출금 가능 금액</span>
+                <strong>{availableWithdraw.toLocaleString()}원</strong>
+              </div>
+              {availableWithdraw < 50000 ? (
+                <div className="withdraw-warning">
+                  <AlertCircle size={18} />
+                  <span>출금 신청은 50,000원 이상부터 가능합니다.</span>
+                </div>
+              ) : (
+                <>
+                  <div className="input-group">
+                    <label>출금 금액</label>
+                    <input type="number" placeholder="출금할 금액을 입력하세요" />
+                  </div>
+                  <div className="input-group">
+                    <label>계좌번호</label>
+                    <input type="text" placeholder="계좌번호를 입력하세요" />
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={() => setShowWithdrawModal(false)}>
+                취소
+              </button>
+              <button 
+                className="confirm-btn" 
+                disabled={availableWithdraw < 50000}
               >
-                <td className="date-cell">{item.date}</td>
-                <td className="title-cell">
-                  <span className={`type-badge ${item.type}`}>
-                    {item.type === 'sale' ? '판매' : '출금'}
-                  </span>
-                  {item.title}
-                </td>
-                <td className={`amount-cell ${item.amount > 0 ? 'positive' : 'negative'}`}>
-                  {item.amount > 0 ? '+' : ''}₩{Math.abs(item.amount).toLocaleString()}
-                </td>
-                <td className="fee-cell">
-                  {item.fee > 0 ? `-₩${item.fee.toLocaleString()}` : '-'}
-                </td>
-                <td className={`net-cell ${item.net > 0 ? 'positive' : 'negative'}`}>
-                  {item.net > 0 ? '+' : ''}₩{Math.abs(item.net).toLocaleString()}
-                </td>
-                <td>
-                  <span className={`status-badge ${item.status}`}>
-                    {item.status === 'completed' ? '완료' : '대기중'}
-                  </span>
-                </td>
-              </motion.tr>
-            ))}
-          </tbody>
-        </table>
-      </motion.div>
-
-      {filteredData.length === 0 && (
-        <div className="empty-state">
-          <p>해당 기간의 내역이 없습니다</p>
+                출금 신청
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

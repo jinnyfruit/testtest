@@ -183,7 +183,8 @@
   font-weight: 600;
   border-radius: 8px;
   /* 균일한 버튼 너비 */
-  min-width: 90px;
+  width: 100px;
+  min-width: 100px;
   text-align: center;
   transition: all 0.2s ease;
 }
