@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   Play, 
@@ -7,8 +7,6 @@ import {
   RefreshCw,
   Settings,
   Sparkles,
-  Clock,
-  Coins,
   X,
   Check,
   Loader2,
@@ -19,24 +17,24 @@ import {
   Heart,
   Share2,
   Maximize2,
-  Trash2
+  AlertCircle
 } from 'lucide-react'
 import './Run.css'
 
 const models = [
-  { id: 'dalle3', name: 'DALL-E 3', provider: 'OpenAI', credits: 60, speed: 'Medium' },
-  { id: 'gpt4o', name: 'GPT-4o Vision', provider: 'OpenAI', credits: 40, speed: 'Fast' },
-  { id: 'gemini', name: 'Gemini Pro', provider: 'Google', credits: 35, speed: 'Fast' },
-  { id: 'runway', name: 'Runway Gen-3', provider: 'Runway', credits: 100, speed: 'Slow', type: 'video' },
-  { id: 'kling', name: 'Kling v1.5', provider: 'Kling AI', credits: 90, speed: 'Slow', type: 'video' },
+  { id: 'dalle3', name: 'DALL-E 3', provider: 'OpenAI', credits: 60, speed: 'Medium', outputType: 'image', endpoint: '/api/generate/dalle3' },
+  { id: 'gpt4o', name: 'GPT-4o Vision', provider: 'OpenAI', credits: 40, speed: 'Fast', outputType: 'image', endpoint: '/api/generate/gpt4o', description: '프롬프트 자동 향상' },
+  { id: 'gemini', name: 'Gemini Pro', provider: 'Google', credits: 35, speed: 'Fast', outputType: 'image', endpoint: '/api/generate/gemini' },
+  { id: 'runway', name: 'Runway Gen-3', provider: 'Runway', credits: 100, speed: 'Slow', outputType: 'video', endpoint: '/api/generate/runway' },
+  { id: 'kling', name: 'Kling v1.5', provider: 'Kling AI', credits: 90, speed: 'Slow', outputType: 'image', endpoint: '/api/generate/kling' },
 ]
 
 const aspectRatios = [
-  { value: '1:1', label: '정사각형', width: 1024, height: 1024 },
-  { value: '16:9', label: '가로형', width: 1920, height: 1080 },
-  { value: '9:16', label: '세로형', width: 1080, height: 1920 },
-  { value: '4:3', label: '표준', width: 1024, height: 768 },
-  { value: '3:2', label: '사진', width: 1536, height: 1024 },
+  { value: '1:1', label: '정사각형' },
+  { value: '16:9', label: '가로형' },
+  { value: '9:16', label: '세로형' },
+  { value: '4:3', label: '표준' },
+  { value: '3:2', label: '사진' },
 ]
 
 const stylePresets = [
@@ -48,53 +46,192 @@ const stylePresets = [
   { id: 'oil-painting', name: 'Oil Painting' },
 ]
 
-// 샘플 생성 기록
-const recentHistory = [
-  { id: 1, prompt: 'cyberpunk city at night with neon lights', image: 'https://picsum.photos/seed/gen1/400/400', model: 'Midjourney', time: '5분 전', liked: true },
-  { id: 2, prompt: 'minimal logo design for tech startup', image: 'https://picsum.photos/seed/gen2/400/400', model: 'DALL-E 3', time: '15분 전', liked: false },
-  { id: 3, prompt: 'fantasy landscape with floating islands', image: 'https://picsum.photos/seed/gen3/400/400', model: 'Stable Diffusion', time: '1시간 전', liked: true },
-  { id: 4, prompt: 'portrait of a warrior in golden armor', image: 'https://picsum.photos/seed/gen4/400/400', model: 'Midjourney', time: '2시간 전', liked: false },
-  { id: 5, prompt: 'cute cat illustration kawaii style', image: 'https://picsum.photos/seed/gen5/400/400', model: 'Leonardo AI', time: '3시간 전', liked: true },
-  { id: 6, prompt: 'abstract geometric pattern colorful', image: 'https://picsum.photos/seed/gen6/400/400', model: 'DALL-E 3', time: '5시간 전', liked: false },
-  { id: 7, prompt: 'futuristic car concept design', image: 'https://picsum.photos/seed/gen7/400/400', model: 'Midjourney', time: '어제', liked: true },
-  { id: 8, prompt: 'cozy coffee shop interior autumn', image: 'https://picsum.photos/seed/gen8/400/400', model: 'Stable Diffusion', time: '어제', liked: false },
-  { id: 9, prompt: 'dragon flying over mountains', image: 'https://picsum.photos/seed/gen9/400/400', model: 'Leonardo AI', time: '2일 전', liked: true },
-]
-
 function Run() {
   const [prompt, setPrompt] = useState('')
   const [selectedModel, setSelectedModel] = useState(models[0])
   const [aspectRatio, setAspectRatio] = useState(aspectRatios[0])
   const [stylePreset, setStylePreset] = useState(stylePresets[0])
   const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedImage, setGeneratedImage] = useState(null)
+  const [generationStatus, setGenerationStatus] = useState('')
+  const [result, setResult] = useState(null)
+  const [error, setError] = useState(null)
   const [showSettings, setShowSettings] = useState(false)
   const [showCreditModal, setShowCreditModal] = useState(false)
-  const [viewMode, setViewMode] = useState('create') // 'create' | 'history'
+  const [viewMode, setViewMode] = useState('create')
   const [previewImage, setPreviewImage] = useState(null)
-  
+  const [history, setHistory] = useState([])
+  const [generationTime, setGenerationTime] = useState(null)
+  const [negativePrompt, setNegativePrompt] = useState('')
+
+  const pollingRef = useRef(null)
+  const startTimeRef = useRef(null)
+
   const userCredits = 500
 
-  const handleGenerate = () => {
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+    }
+  }, [])
+
+  // 비동기 작업 상태 폴링
+  const pollTaskStatus = (statusEndpoint, taskId) => {
+    return new Promise((resolve, reject) => {
+      let attempts = 0
+      const maxAttempts = 120
+
+      pollingRef.current = setInterval(async () => {
+        try {
+          attempts++
+          if (attempts > maxAttempts) {
+            clearInterval(pollingRef.current)
+            reject(new Error('생성 시간이 초과되었습니다. (10분)'))
+            return
+          }
+
+          const elapsed = Math.floor(attempts * 5)
+          setGenerationStatus(`AI가 생성 중... (${elapsed}초 경과)`)
+
+          const response = await fetch(`${statusEndpoint}/${taskId}`)
+          const data = await response.json()
+
+          if (data.error) {
+            clearInterval(pollingRef.current)
+            reject(new Error(data.error))
+            return
+          }
+
+          if (data.status === 'SUCCEEDED' || data.status === 'succeed') {
+            clearInterval(pollingRef.current)
+            resolve(data)
+          } else if (data.status === 'FAILED' || data.status === 'failed') {
+            clearInterval(pollingRef.current)
+            reject(new Error(data.error || '생성에 실패했습니다.'))
+          }
+        } catch (err) {
+          clearInterval(pollingRef.current)
+          reject(err)
+        }
+      }, 5000)
+    })
+  }
+
+  const handleGenerate = async () => {
     if (!prompt.trim()) return
-    
+
     if (userCredits < selectedModel.credits) {
       setShowCreditModal(true)
       return
     }
-    
+
     setIsGenerating(true)
-    setGeneratedImage(null)
-    
-    setTimeout(() => {
-      setIsGenerating(false)
-      setGeneratedImage({
-        url: `https://picsum.photos/seed/${Date.now()}/800/800`,
-        prompt: prompt,
-        model: selectedModel.name,
-        time: '4.2초'
+    setResult(null)
+    setError(null)
+    setGenerationTime(null)
+    setGenerationStatus('AI 모델에 요청 중...')
+    startTimeRef.current = Date.now()
+
+    try {
+      const body = {
+        prompt: prompt.trim(),
+        aspectRatio: aspectRatio.value,
+        stylePreset: stylePreset.id,
+        quality: 'standard',
+      }
+      if (negativePrompt.trim()) {
+        body.negative_prompt = negativePrompt.trim()
+      }
+
+      const response = await fetch(selectedModel.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       })
-    }, 3000)
+
+      const data = await response.json()
+
+      if (!response.ok || data.error) {
+        throw new Error(data.error || '생성 중 오류가 발생했습니다.')
+      }
+
+      // 비동기 모델 (Runway, Kling) - 태스크 폴링
+      if (data.taskId) {
+        setGenerationStatus('AI가 콘텐츠를 생성하고 있습니다...')
+
+        const statusEndpoint = selectedModel.id === 'runway'
+          ? '/api/generate/runway/status'
+          : '/api/generate/kling/status'
+
+        const pollResult = await pollTaskStatus(statusEndpoint, data.taskId)
+
+        const elapsed = ((Date.now() - startTimeRef.current) / 1000).toFixed(1)
+        setGenerationTime(`${elapsed}초`)
+
+        const newResult = {
+          type: pollResult.type || selectedModel.outputType,
+          url: pollResult.url,
+          prompt: prompt,
+          model: selectedModel.name,
+        }
+        setResult(newResult)
+        setHistory(prev => [{ ...newResult, id: Date.now(), time: formatTime() }, ...prev])
+      } else {
+        // 동기 결과 (DALL-E 3, GPT-4o, Gemini)
+        const elapsed = ((Date.now() - startTimeRef.current) / 1000).toFixed(1)
+        setGenerationTime(`${elapsed}초`)
+
+        const newResult = {
+          type: data.type || 'image',
+          url: data.url,
+          revised_prompt: data.revised_prompt,
+          enhanced_prompt: data.enhanced_prompt,
+          prompt: prompt,
+          model: selectedModel.name,
+        }
+        setResult(newResult)
+        setHistory(prev => [{ ...newResult, id: Date.now(), time: formatTime() }, ...prev])
+      }
+    } catch (err) {
+      console.error('Generation error:', err)
+      setError(err.message)
+    } finally {
+      setIsGenerating(false)
+      setGenerationStatus('')
+    }
+  }
+
+  const formatTime = () => {
+    const now = new Date()
+    return `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`
+  }
+
+  const handleDownload = async () => {
+    if (!result?.url) return
+    try {
+      // base64 데이터 URL인 경우
+      if (result.url.startsWith('data:')) {
+        const a = document.createElement('a')
+        a.href = result.url
+        a.download = `prommi-${selectedModel.id}-${Date.now()}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        return
+      }
+      // 일반 URL인 경우
+      const response = await fetch(result.url)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `prommi-${selectedModel.id}-${Date.now()}.${result.type === 'video' ? 'mp4' : 'png'}`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (err) {
+      window.open(result.url, '_blank')
+    }
   }
 
   return (
@@ -124,12 +261,8 @@ function Run() {
             <div className="controls-header">
               <h2>
                 <Sparkles size={20} />
-                이미지 생성
+                {selectedModel.outputType === 'video' ? '비디오 생성' : '이미지 생성'}
               </h2>
-              <div className="credits-badge">
-                <Coins size={14} />
-                <span>{userCredits}C</span>
-              </div>
             </div>
 
             {/* Model Selection */}
@@ -144,8 +277,14 @@ function Run() {
                   >
                     <span className="model-name">{model.name}</span>
                     <span className="model-meta">
-                      <Zap size={10} /> {model.speed} · {model.credits}C
+                      <Zap size={10} /> {model.speed} · 🍰{model.credits}
                     </span>
+                    {model.outputType === 'video' && (
+                      <span className="model-type-badge"><Film size={10} /> Video</span>
+                    )}
+                    {model.description && (
+                      <span className="model-desc">{model.description}</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -158,7 +297,7 @@ function Run() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="생성하고 싶은 이미지를 설명해주세요..."
+                  placeholder="생성하고 싶은 이미지를 설명해주세요... (예: A cute cat sitting on a rainbow cloud)"
                   rows={4}
                 />
                 <span className="char-count">{prompt.length}</span>
@@ -211,20 +350,13 @@ function Run() {
             {showSettings && (
               <div className="advanced-settings">
                 <div className="setting-row">
-                  <label>스타일 강도</label>
-                  <input type="range" min="0" max="100" defaultValue="50" />
-                </div>
-                <div className="setting-row">
-                  <label>품질</label>
-                  <select>
-                    <option>표준</option>
-                    <option>고품질</option>
-                    <option>최고품질 (+20C)</option>
-                  </select>
-                </div>
-                <div className="setting-row">
                   <label>Negative Prompt</label>
-                  <input type="text" placeholder="제외할 요소 입력" />
+                  <input 
+                    type="text" 
+                    placeholder="제외할 요소 입력 (예: blurry, low quality)" 
+                    value={negativePrompt}
+                    onChange={(e) => setNegativePrompt(e.target.value)}
+                  />
                 </div>
               </div>
             )}
@@ -238,13 +370,13 @@ function Run() {
               {isGenerating ? (
                 <>
                   <Loader2 size={20} className="spinner" />
-                  생성 중...
+                  <span className="gen-btn-text">{generationStatus || '생성 중...'}</span>
                 </>
               ) : (
                 <>
                   <Play size={20} />
-                  이미지 생성
-                  <span className="btn-cost">{selectedModel.credits}C</span>
+                  {selectedModel.outputType === 'video' ? '비디오 생성' : '이미지 생성'}
+                  <span className="btn-cost">🍰{selectedModel.credits}</span>
                 </>
               )}
             </button>
@@ -252,7 +384,22 @@ function Run() {
 
           {/* Right Panel - Preview */}
           <main className="run-preview">
-            {!generatedImage && !isGenerating && (
+            {/* Error State */}
+            {error && !isGenerating && (
+              <div className="error-preview">
+                <div className="error-icon">
+                  <AlertCircle size={48} />
+                </div>
+                <h3>생성 실패</h3>
+                <p className="error-message">{error}</p>
+                <button onClick={() => setError(null)} className="retry-btn">
+                  다시 시도
+                </button>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!result && !isGenerating && !error && (
               <div className="empty-preview">
                 <div className="empty-icon">
                   <ImageIcon size={48} />
@@ -262,6 +409,7 @@ function Run() {
               </div>
             )}
 
+            {/* Generating State */}
             {isGenerating && (
               <div className="generating-preview">
                 <div className="gen-animation">
@@ -270,38 +418,71 @@ function Run() {
                   <div className="gen-ring"></div>
                   <Sparkles size={32} className="gen-icon" />
                 </div>
-                <h3>이미지 생성 중</h3>
-                <p>AI가 이미지를 생성하고 있습니다...</p>
+                <h3>{selectedModel.outputType === 'video' ? '비디오' : '이미지'} 생성 중</h3>
+                <p>{generationStatus}</p>
                 <div className="gen-progress">
                   <div className="progress-bar"></div>
                 </div>
+                <span className="gen-model-badge">{selectedModel.name}</span>
               </div>
             )}
 
-            {generatedImage && (
+            {/* Result - Image */}
+            {result && result.type === 'image' && !isGenerating && !error && (
               <div className="result-preview">
                 <div className="result-image">
-                  <img src={generatedImage.url} alt="생성된 이미지" />
+                  <img src={result.url} alt="생성된 이미지" />
                   <div className="result-overlay">
-                    <button className="overlay-btn" onClick={() => setPreviewImage(generatedImage.url)}>
+                    <button className="overlay-btn" onClick={() => setPreviewImage(result.url)}>
                       <Maximize2 size={20} />
                     </button>
                   </div>
                 </div>
+                {result.revised_prompt && (
+                  <div className="result-prompt-info">
+                    <span className="prompt-label">AI 해석:</span>
+                    <p>{result.revised_prompt}</p>
+                  </div>
+                )}
+                {result.enhanced_prompt && (
+                  <div className="result-prompt-info enhanced">
+                    <span className="prompt-label">향상된 프롬프트:</span>
+                    <p>{result.enhanced_prompt}</p>
+                  </div>
+                )}
                 <div className="result-footer">
                   <div className="result-info">
                     <span className="result-status">
-                      <Check size={14} /> 생성 완료 · {generatedImage.time}
+                      <Check size={14} /> 생성 완료 · {generationTime} · {result.model}
                     </span>
                   </div>
                   <div className="result-actions">
-                    <button className="result-btn">
-                      <Heart size={18} />
+                    <button className="result-btn primary" onClick={handleDownload}>
+                      <Download size={18} />
+                      다운로드
                     </button>
-                    <button className="result-btn">
-                      <Share2 size={18} />
+                    <button className="result-btn" onClick={handleGenerate}>
+                      <RefreshCw size={18} />
                     </button>
-                    <button className="result-btn primary">
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Result - Video */}
+            {result && result.type === 'video' && !isGenerating && !error && (
+              <div className="result-preview">
+                <div className="result-video">
+                  <video src={result.url} controls autoPlay loop playsInline />
+                </div>
+                <div className="result-footer">
+                  <div className="result-info">
+                    <span className="result-status">
+                      <Check size={14} /> 비디오 생성 완료 · {generationTime} · {result.model}
+                    </span>
+                  </div>
+                  <div className="result-actions">
+                    <button className="result-btn primary" onClick={handleDownload}>
                       <Download size={18} />
                       다운로드
                     </button>
@@ -315,30 +496,46 @@ function Run() {
           </main>
         </div>
       ) : (
-        /* History View - Instagram-like Grid */
+        /* History View */
         <div className="history-view">
           <div className="history-header">
-            <h2>최근 생성 기록</h2>
-            <span className="history-count">{recentHistory.length}개의 이미지</span>
+            <h2>생성 기록</h2>
+            <span className="history-count">{history.length}개의 결과</span>
           </div>
           
-          <div className="history-grid">
-            {recentHistory.map(item => (
-              <div 
-                key={item.id} 
-                className="history-card"
-                onClick={() => setPreviewImage(item.image)}
-              >
-                <img src={item.image} alt="" />
-                <div className="history-overlay">
-                  <div className="overlay-content">
-                    {item.liked && <Heart size={16} fill="currentColor" className="liked" />}
-                    <span className="overlay-model">{item.model}</span>
+          {history.length === 0 ? (
+            <div className="history-empty">
+              <ImageIcon size={48} />
+              <p>아직 생성 기록이 없습니다.</p>
+              <button onClick={() => setViewMode('create')} className="retry-btn">
+                생성하러 가기
+              </button>
+            </div>
+          ) : (
+            <div className="history-grid">
+              {history.map(item => (
+                <div 
+                  key={item.id} 
+                  className="history-card"
+                  onClick={() => {
+                    if (item.type === 'image') setPreviewImage(item.url)
+                  }}
+                >
+                  {item.type === 'video' ? (
+                    <video src={item.url} muted loop />
+                  ) : (
+                    <img src={item.url} alt="" />
+                  )}
+                  <div className="history-overlay">
+                    <div className="overlay-content">
+                      <span className="overlay-model">{item.model}</span>
+                      <span className="overlay-time">{item.time}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -357,17 +554,17 @@ function Run() {
         <div className="modal-backdrop" onClick={() => setShowCreditModal(false)}>
           <div className="credit-modal" onClick={e => e.stopPropagation()}>
             <div className="modal-icon">
-              <Coins size={32} />
+              <span style={{ fontSize: '2rem' }}>🍰</span>
             </div>
-            <h2>크레딧이 부족합니다</h2>
-            <p>이미지 생성을 위해 {selectedModel.credits}C가 필요합니다.</p>
-            <p className="current-credits">현재 보유: {userCredits}C</p>
+            <h2>케이크가 부족합니다</h2>
+            <p>이미지 생성을 위해 🍰{selectedModel.credits}가 필요합니다.</p>
+            <p className="current-credits">현재 보유: 🍰{userCredits}</p>
             <div className="modal-actions">
               <button className="modal-btn secondary" onClick={() => setShowCreditModal(false)}>
                 취소
               </button>
               <Link to="/credits" className="modal-btn primary">
-                크레딧 충전하기
+                케이크 충전하기
               </Link>
             </div>
           </div>

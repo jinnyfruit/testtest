@@ -10,8 +10,9 @@ import {
   Share2,
   Edit3,
   Trash2,
-  MoreVertical,
-  CornerDownRight
+  MoreHorizontal,
+  ThumbsUp,
+  Check
 } from 'lucide-react'
 import './PromptRequestDetail.css'
 
@@ -87,48 +88,8 @@ const statusConfig = {
   completed: { label: '완료', className: 'status-completed' }
 }
 
-// 인라인 답글 입력 컴포넌트
-function InlineReplyInput({ targetAuthor, onSubmit, onCancel }) {
-  const [text, setText] = useState('')
-  const inputRef = useRef(null)
-
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
-  const handleSubmit = () => {
-    if (!text.trim()) return
-    onSubmit(text)
-    setText('')
-  }
-
-  return (
-    <div className="inline-reply-input">
-      <div className="inline-reply-bar">
-        <span className="inline-reply-label">@{targetAuthor}에게 답글</span>
-        <button className="inline-reply-cancel" onClick={onCancel}>
-          <X size={12} />
-        </button>
-      </div>
-      <div className="inline-reply-field">
-        <input
-          ref={inputRef}
-          type="text"
-          placeholder="답글을 입력하세요..."
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-        />
-        <button className="inline-reply-send" onClick={handleSubmit}>
-          <Send size={14} />
-        </button>
-      </div>
-    </div>
-  )
-}
-
-// 댓글 컴포넌트
-function ReplyCard({ reply, isOwner, onEdit, onDelete, onSelect, showSelectButton, replyingToId, onStartReply, onSubmitReply, onCancelReply, children }) {
+// 댓글 컴포넌트 (커뮤니티 스타일)
+function ReplyCard({ reply, isReply, isOwner, onEdit, onDelete, onSelect, showSelectButton, replyingToId, onStartReply, onSubmitReply, onCancelReply, replyText, setReplyText }) {
   const [showMenu, setShowMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editText, setEditText] = useState(reply.content)
@@ -157,97 +118,146 @@ function ReplyCard({ reply, isOwner, onEdit, onDelete, onSelect, showSelectButto
   }
 
   return (
-    <div className={`reply-card ${reply.isSelected ? 'selected' : ''}`}>
+    <div className={`detail-comment ${isReply ? 'is-reply' : ''} ${reply.isSelected ? 'selected' : ''}`}>
       {reply.isSelected && (
         <div className="selected-badge">
           <Award size={12} />
           채택됨
         </div>
       )}
-      <div className="reply-head">
-        <img src={reply.avatar} alt="" className="reply-avatar" />
-        <div className="reply-author">
-          <span className="reply-name">@{reply.author}</span>
+      <img src={reply.avatar} alt="" className="comment-avatar" />
+      <div className="comment-content">
+        <div className="comment-top">
+          <span className="comment-name">@{reply.author}</span>
           {reply.isCreator && <span className="creator-badge">Creator</span>}
+          <span className="comment-date">{reply.time}</span>
+          {isMyReply && (
+            <div className="comment-menu-wrapper">
+              <button 
+                className="comment-menu-btn"
+                onClick={() => setShowMenu(!showMenu)}
+              >
+                <MoreHorizontal size={14} />
+              </button>
+              {showMenu && (
+                <div className="dropdown-menu comment-dropdown">
+                  <button className="dropdown-item" onClick={handleEdit}>
+                    <Edit3 size={13} />
+                    <span>수정</span>
+                  </button>
+                  <button className="dropdown-item danger" onClick={handleDelete}>
+                    <Trash2 size={13} />
+                    <span>삭제</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <span className="reply-time">{reply.time}</span>
-        
-        {isMyReply && (
-          <div className="reply-menu-wrapper">
-            <button className="reply-menu-btn" onClick={() => setShowMenu(!showMenu)}>
-              <MoreVertical size={14} />
+
+        {isEditing ? (
+          <div className="comment-edit-area">
+            <input
+              type="text"
+              value={editText}
+              onChange={(e) => setEditText(e.target.value)}
+              className="comment-edit-input"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleSaveEdit()
+                }
+              }}
+            />
+            <div className="comment-edit-actions">
+              <button type="button" className="comment-edit-cancel" onClick={handleCancelEdit}>
+                취소
+              </button>
+              <button type="button" className="comment-edit-save" onClick={handleSaveEdit}>
+                <Check size={14} />
+                저장
+              </button>
+            </div>
+          </div>
+        ) : (
+          <p className="comment-text">{reply.content}</p>
+        )}
+
+        {reply.promptPreview && !isEditing && (
+          <button 
+            className="reply-preview"
+            onClick={() => reply.onPreview && reply.onPreview(reply.promptPreview)}
+          >
+            <img src={reply.promptPreview} alt="" />
+            <div className="preview-overlay">
+              <Eye size={16} />
+              <span>미리보기</span>
+            </div>
+          </button>
+        )}
+
+        {!isEditing && (
+          <div className="comment-actions">
+            <button type="button" className="comment-like-btn">
+              <ThumbsUp size={14} />
+              <span>{reply.likes || 0}</span>
             </button>
-            {showMenu && (
-              <div className="reply-menu">
-                <button onClick={handleEdit}>
-                  <Edit3 size={12} />
-                  수정
-                </button>
-                <button onClick={handleDelete} className="delete">
-                  <Trash2 size={12} />
-                  삭제
-                </button>
-              </div>
+            <button 
+              type="button"
+              className={`comment-reply-btn ${replyingToId === reply.id ? 'active' : ''}`}
+              onClick={() => onStartReply(reply.id)}
+            >
+              답글
+            </button>
+            {showSelectButton && !reply.isSelected && (
+              <button type="button" className="comment-accept-btn" onClick={() => onSelect(reply.id)}>
+                <CheckCircle size={14} />
+                <span>채택</span>
+              </button>
             )}
           </div>
         )}
-      </div>
-      
-      {isEditing ? (
-        <div className="reply-edit-form">
-          <textarea 
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            rows={2}
-          />
-          <div className="edit-actions">
-            <button className="btn-cancel" onClick={handleCancelEdit}>취소</button>
-            <button className="btn-save" onClick={handleSaveEdit}>저장</button>
-          </div>
-        </div>
-      ) : (
-        <p className="reply-text">{reply.content}</p>
-      )}
-      
-      {reply.promptPreview && !isEditing && (
-        <button 
-          className="reply-preview"
-          onClick={() => reply.onPreview && reply.onPreview(reply.promptPreview)}
-        >
-          <img src={reply.promptPreview} alt="" />
-          <div className="preview-overlay">
-            <Eye size={16} />
-            <span>미리보기</span>
-          </div>
-        </button>
-      )}
-      
-      {!isEditing && (
-        <div className="reply-actions">
-          <button className="action-btn reply-btn" onClick={() => onStartReply(reply.id)}>
-            <CornerDownRight size={10} />
-            <span>답글</span>
-          </button>
-          {showSelectButton && !reply.isSelected && (
-            <button className="action-btn accept" onClick={() => onSelect(reply.id)}>
-              <CheckCircle size={10} />
-              <span>채택</span>
-            </button>
-          )}
-        </div>
-      )}
 
-      {/* 이 댓글에 대한 인라인 답글 입력창 */}
-      {replyingToId === reply.id && (
-        <InlineReplyInput
-          targetAuthor={reply.author}
-          onSubmit={(text) => onSubmitReply(reply.id, text)}
-          onCancel={onCancelReply}
-        />
-      )}
-      
-      {/* 대댓글 */}
-      {children}
+        {/* 답글 입력 */}
+        {replyingToId === reply.id && (
+          <div className="reply-input-area">
+            <img src="https://picsum.photos/seed/startup/100/100" alt="" className="reply-avatar" />
+            <div className="reply-input-wrap">
+              <input 
+                type="text" 
+                placeholder={`@${reply.author}에게 답글...`}
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    onSubmitReply(reply.id, replyText)
+                  }
+                }}
+                autoFocus
+              />
+              <div className="reply-input-actions">
+                <button 
+                  type="button"
+                  className="reply-cancel-btn"
+                  onClick={onCancelReply}
+                >
+                  취소
+                </button>
+                <button 
+                  type="button"
+                  className="reply-send-btn" 
+                  disabled={!replyText?.trim()}
+                  onClick={() => onSubmitReply(reply.id, replyText)}
+                >
+                  <Send size={14} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -256,6 +266,7 @@ function PromptRequestDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [replyText, setReplyText] = useState('')
+  const [inlineReplyText, setInlineReplyText] = useState('')
   const [previewImage, setPreviewImage] = useState(null)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [replyingTo, setReplyingTo] = useState(null)
@@ -378,16 +389,18 @@ function PromptRequestDetail() {
 
   // 인라인 답글 제출
   const handleInlineSubmitReply = (parentId, text) => {
+    if (!text?.trim()) return
     const newReply = {
       id: Date.now(),
       author: currentUser.username,
       avatar: 'https://picsum.photos/seed/startup/100/100',
       isCreator: currentUser.isCreator,
-      content: text,
+      content: `@${replies.find(r => r.id === parentId)?.author || ''} ${text}`,
       promptPreview: null,
       time: '방금 전',
       isSelected: false,
-      parentId: parentId
+      parentId: parentId,
+      likes: 0
     }
 
     setReplies(prev => prev.map(reply => {
@@ -401,6 +414,7 @@ function PromptRequestDetail() {
     }))
 
     setReplyingTo(null)
+    setInlineReplyText('')
   }
 
   // 하단 댓글 입력 (새 댓글)
@@ -505,36 +519,66 @@ function PromptRequestDetail() {
             )}
           </div>
 
-          {/* Replies - 하단 배치 */}
-          <div className="detail-replies-section">
-            <div className="replies-section">
-              <div className="replies-header">
-                <h3>크리에이터 제안</h3>
-                <span className="reply-count">{replies.length}개</span>
+          {/* Replies - 커뮤니티 스타일 */}
+          <div className="detail-comments-section">
+            <div className="detail-comments">
+              <h3 className="comments-title">크리에이터 제안 {replies.length}개</h3>
+              
+              {/* 새 댓글 입력 */}
+              <div className="detail-comment-input">
+                <img src="https://picsum.photos/seed/startup/100/100" alt="" />
+                <div className="comment-input-wrap">
+                  <input 
+                    type="text" 
+                    placeholder="댓글을 입력하세요..."
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleSubmitNewReply()
+                      }
+                    }}
+                  />
+                  <button 
+                    type="button"
+                    className="comment-send-btn" 
+                    disabled={!replyText.trim()}
+                    onClick={handleSubmitNewReply}
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
               </div>
               
-              <div className="replies-list">
+              {/* 댓글 목록 */}
+              <div className="detail-comments-list">
                 {replies.map(reply => (
-                  <ReplyCard
-                    key={reply.id}
-                    reply={{ ...reply, onPreview: setPreviewImage }}
-                    isOwner={isOwner}
-                    onEdit={handleEditReply}
-                    onDelete={handleDeleteReply}
-                    onSelect={handleSelectReply}
-                    showSelectButton={isOwner && request.status === 'open'}
-                    replyingToId={replyingTo}
-                    onStartReply={handleStartReply}
-                    onSubmitReply={handleInlineSubmitReply}
-                    onCancelReply={() => setReplyingTo(null)}
-                  >
+                  <div key={reply.id} className="comment-thread">
+                    {/* 부모 댓글 */}
+                    <ReplyCard
+                      reply={{ ...reply, onPreview: setPreviewImage }}
+                      isReply={false}
+                      isOwner={isOwner}
+                      onEdit={handleEditReply}
+                      onDelete={handleDeleteReply}
+                      onSelect={handleSelectReply}
+                      showSelectButton={isOwner && request.status === 'open'}
+                      replyingToId={replyingTo}
+                      onStartReply={handleStartReply}
+                      onSubmitReply={handleInlineSubmitReply}
+                      onCancelReply={() => { setReplyingTo(null); setInlineReplyText('') }}
+                      replyText={inlineReplyText}
+                      setReplyText={setInlineReplyText}
+                    />
                     {/* 대댓글 */}
                     {reply.childReplies && reply.childReplies.length > 0 && (
-                      <div className="child-replies">
+                      <div className="comment-replies">
                         {reply.childReplies.map(childReply => (
                           <ReplyCard
                             key={childReply.id}
                             reply={{ ...childReply, onPreview: setPreviewImage }}
+                            isReply={true}
                             isOwner={isOwner}
                             onEdit={handleEditReply}
                             onDelete={handleDeleteReply}
@@ -543,29 +587,15 @@ function PromptRequestDetail() {
                             replyingToId={replyingTo}
                             onStartReply={() => handleStartReply(reply.id)}
                             onSubmitReply={handleInlineSubmitReply}
-                            onCancelReply={() => setReplyingTo(null)}
+                            onCancelReply={() => { setReplyingTo(null); setInlineReplyText('') }}
+                            replyText={inlineReplyText}
+                            setReplyText={setInlineReplyText}
                           />
                         ))}
                       </div>
                     )}
-                  </ReplyCard>
+                  </div>
                 ))}
-              </div>
-              
-              {/* 새 댓글 입력 (하단 고정) */}
-              <div className="new-reply-input">
-                <div className="reply-input-wrap">
-                  <input 
-                    type="text" 
-                    placeholder="댓글을 남겨보세요"
-                    value={replyText}
-                    onChange={(e) => setReplyText(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSubmitNewReply()}
-                  />
-                  <button className="reply-submit" onClick={handleSubmitNewReply}>
-                    <Send size={14} />
-                  </button>
-                </div>
               </div>
             </div>
           </div>
