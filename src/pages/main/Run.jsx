@@ -24,10 +24,11 @@ import {
 import './Run.css'
 
 const models = [
-  { id: 'midjourney', name: 'Midjourney v6', credits: 50, speed: 'Fast' },
-  { id: 'dalle3', name: 'DALL-E 3', credits: 40, speed: 'Medium' },
-  { id: 'sdxl', name: 'Stable Diffusion XL', credits: 30, speed: 'Fast' },
-  { id: 'leonardo', name: 'Leonardo AI', credits: 35, speed: 'Fast' },
+  { id: 'dalle3', name: 'DALL-E 3', provider: 'OpenAI', credits: 60, speed: 'Medium' },
+  { id: 'gpt4o', name: 'GPT-4o Vision', provider: 'OpenAI', credits: 40, speed: 'Fast' },
+  { id: 'gemini', name: 'Gemini Pro', provider: 'Google', credits: 35, speed: 'Fast' },
+  { id: 'runway', name: 'Runway Gen-3', provider: 'Runway', credits: 100, speed: 'Slow', type: 'video' },
+  { id: 'kling', name: 'Kling v1.5', provider: 'Kling AI', credits: 90, speed: 'Slow', type: 'video' },
 ]
 
 const aspectRatios = [

@@ -18,6 +18,7 @@ const navItems = [
   { path: '/paid', label: '유료' },
   { path: '/request', label: '프롬프트 요청' },
   { path: '/community', label: '커뮤니티' },
+  { path: '/ai-models', label: 'AI 모델' },
   { path: '/run', label: '실행' },
 ]
 

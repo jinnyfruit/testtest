@@ -12,6 +12,7 @@ import PromptRequestDetail from './pages/main/PromptRequestDetail'
 import PromptRequestWrite from './pages/main/PromptRequestWrite'
 import Community from './pages/main/Community'
 import Run from './pages/main/Run'
+import AIModels from './pages/main/AIModels'
 import Profile from './pages/main/Profile'
 import Credits from './pages/main/Credits'
 
@@ -45,6 +46,7 @@ function App() {
           <Route path="request/:id" element={<PromptRequestDetail />} />
           <Route path="community" element={<Community />} />
           <Route path="run" element={<Run />} />
+          <Route path="ai-models" element={<AIModels />} />
           <Route path="profile/:username" element={<Profile />} />
           <Route path="credits" element={<Credits />} />
         </Route>
